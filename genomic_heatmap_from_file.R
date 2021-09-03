@@ -30,18 +30,18 @@ parser$add_argument("-r", "--ref_genome", type="character", default="hg18",
 parser$add_argument("-f", "--file", type="character", default=NULL,
     help="File with sites. CSV format. Included columns: seqnames, strand, position, sampleName, refGenome.")
 
-#args <- parser$parse_args()
+args <- parser$parse_args()
 #args
 
-args<- list()
-args$c <- "/home/adrian/ext/genomicHeatMapMaker/INSPIIRED.yml"
-args$cell_types <- "epiCellTypes"
-args$file <- "genHeatMap/sites"
-args$output_dir <- "epiGenHeatMap"
-args$ref_genome <- "hg38"
-args$sample_gtsp <- "genHeatMap/samples"
+# args<- list()
+# args$c <- "/home/adrian/ext/genomicHeatMapMaker/INSPIIRED.yml"
+# args$cell_types <- "epiCellTypes"
+# args$file <- "genHeatMap/sites"
+# args$output_dir <- "epiGenHeatMap"
+# args$ref_genome <- "hg38"
+# args$sample_gtsp <- "genHeatMap/samples"
 
-codeDir <- '.'
+#codeDir <- '.'
 suppressMessages(source(file.path(codeDir, "genomicHeatmapMaker.R")))
 suppressMessages(source(file.path(codeDir, "utils.R")))
 

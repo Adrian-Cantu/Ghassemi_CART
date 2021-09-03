@@ -28,21 +28,21 @@ parser$add_argument("-t", "--cell_types", type="character",
 parser$add_argument("-f", "--file", type="character", default=NULL,
     help="File with sites. CSV format. Included columns: seqnames, start, end, strand, sampleName, refGenome.")
 
-#args <- parser$parse_args()
+args <- parser$parse_args()
 
- args<- list()
- args$c <- "/home/adrian/ext/genomicHeatMapMaker/INSPIIRED.yml"
- args$cell_types <- "epiCellTypes"
- args$file <- "sites"
- args$output_dir <- "epiGenHeatMap"
- args$ref_genome <- "hg38"
- args$sample_gtsp <- "samples"
+ # args<- list()
+ # args$c <- "/home/adrian/ext/genomicHeatMapMaker/INSPIIRED.yml"
+ # args$cell_types <- "epiCellTypes"
+ # args$file <- "sites"
+ # args$output_dir <- "epiGenHeatMap"
+ # args$ref_genome <- "hg38"
+ # args$sample_gtsp <- "samples"
 
 print(args)
 
 
-# codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
-codeDir <- '.'
+ codeDir <- dirname(sub("--file=", "", grep("--file=", commandArgs(trailingOnly=FALSE), value=T)))
+#codeDir <- '.'
 print(codeDir)
 
 libs <- c("yaml", "survival", "hotROCs", "colorspace", "hiAnnotator", "plyr", "reshape2",
@@ -94,7 +94,7 @@ histoneorder_for_heatmap <- epigenetic_features()
 if ( ! is.null(args$cell_types)) {
     # use only these features
     historder_subset <- read.csv(args$cell_types, header=FALSE, stringsAsFactors=FALSE)$V1
-
+    print(historder_subset[!(historder_subset %in% histoneorder_for_heatmap)])
     #save(list = ls(all.names = TRUE), file = 'dev.RData', envir=environment())
     stopifnot(all(historder_subset %in% histoneorder_for_heatmap)) 
     histoneorder_for_heatmap <- historder_subset

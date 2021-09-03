@@ -6,6 +6,7 @@ source('lib.R')
 
 dbConn  <- dbConnect(MySQL(), group='specimen_management')
 samples <- dbGetQuery(dbConn, 'select * from gtsp where Trial="Ghassemi_CART"')
+#dbGetQuery(dbConn, 'select * from gtsp where SpecimenAccNum="GTSP0734"')
 
 if(! file.exists('intSites.rds')){
   intSites <- getDBgenomicFragments(samples$SpecimenAccNum, 'specimen_management', 'intsites_miseq') %>%
@@ -31,10 +32,13 @@ d$patient <- ifelse(grepl('D7', d$timePoint), 'D7', 'D9')
 
 dir.create('epiGenHeatMap')
 set.seed(2356)
-createEpiGenomicHeatMapData(d, outputDir='epiGenHeatMap',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript')
+createEpiGenomicHeatMapData(d, outputDir='epiGenHeatMap',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',controlFile="INSPIIRED.yml",softwarePath = 'epi_heatmap_from_file.R')
 epiGenomicHeatMap <- createGenomicHeatMapPlot('epiGenHeatMap', sampleOrder = c('D7', 'D9'))
 
 dir.create('genHeatMap')
-createGenomicHeatMapData(d, outputDir='genHeatMap',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript')
+createGenomicHeatMapData(d, outputDir='genHeatMap',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',softwarePath = 'genomic_heatmap_from_file.R',controlFile = 'INSPIIRED.yml')
 genomicHeatMap <- createGenomicHeatMapPlot('genHeatMap', sampleOrder = c('D7', 'D9'))
 
+# pdf(file='test.pdf')
+# genomicHeatMap
+# dev.off()
