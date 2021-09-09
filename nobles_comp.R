@@ -1,7 +1,8 @@
 library(gt23)
 library(RMySQL)
-library(dplyr)
-library(ggplot2)
+#library(dplyr)
+#library(ggplot2)
+library(tidyverse)
 source('lib.R')
 
 dbConn  <- dbConnect(MySQL(), group='specimen_management')
@@ -101,7 +102,68 @@ f_dat <- data.frame(
 )
 f_dat
 
+## geting the order of the epifeatures from the svg file
+## grep -A 3 -P 'xlink:href="row.\d+.svg"' main.svg | grep -v -e '^--$' | grep desc1 | perl -lne '/desc1>(.*)<\/desc1/; print $1' | tac | tr '\n' ',' | sed 's/,$/")\n/' | sed 's/,/","/' | sed 's/^/c("/'
+
+epi_f_order <- c("Act_CD4_Tip60.10Kb","Rest_CD4_Tip60.10Kb","Rest_CD4_MOF.10Kb","Rest_CD4_p300.10Kb","Rest_CD4_PCAF.10Kb","Rest_CD4_CBP.10Kb","Act_CD4_HDAC6.10Kb","Rest_CD4_HDAC6.10Kb","Rest_CD4_HDAC3.10Kb","Rest_CD4_HDAC2.10Kb","Rest_CD4_HDAC1.10Kb","RestingNucleosomes.10Kb","ActivatedNucleosomes.10Kb","NRSF.10Kb","HP1b_promoters.10Kb","HP1a_promoters.10Kb","Brd4_promoters.10Kb","Brd3_promoters.10Kb","Brd2_promoters.10Kb",
+                 "H4K91ac.10Kb","H4K8ac.10Kb","H4K5ac.10Kb","H4K16ac.10Kb","H4K12ac.10Kb","H3K9ac.10Kb","H3K4ac.10Kb","H3K36ac.10Kb","H3K27ac.10Kb","H3K23ac.10Kb","H3K18ac.10Kb","H3K14ac.10Kb","H2BK5ac.10Kb","H2BK20ac.10Kb","H2BK12ac.10Kb","H2BK120ac.10Kb","H2AK9ac.10Kb","H2AK5ac.10Kb","CTCF.10Kb","H2AZ.10Kb","PolII.10Kb","H4K20me3.10Kb","H4K20me1.10Kb","H4R3me2.10Kb","H3K79me3.10Kb","H3K79me2.10Kb","H3K79me1.10Kb","H3K36me3.10Kb","H3K36me1.10Kb","H3K27me3.10Kb","H3K27me2.10Kb","H3K27me1.10Kb","H3K9me3.10Kb","H3K9me2.10Kb","H3K9me1.10Kb","H3K4me3.10Kb","H3K4me2.10Kb","H3K4me1.10Kb","H3R2me2.10Kb","H3R2me1.10Kb","H2BK5me1.10Kb")
+b_prot <- c("Act_CD4_Tip60.10Kb","Rest_CD4_Tip60.10Kb","Rest_CD4_MOF.10Kb","Rest_CD4_p300.10Kb","Rest_CD4_PCAF.10Kb","Rest_CD4_CBP.10Kb","Act_CD4_HDAC6.10Kb",
+            "Rest_CD4_HDAC6.10Kb","Rest_CD4_HDAC3.10Kb","Rest_CD4_HDAC2.10Kb","Rest_CD4_HDAC1.10Kb","RestingNucleosomes.10Kb","ActivatedNucleosomes.10Kb","NRSF.10Kb",
+            "HP1b_promoters.10Kb","HP1a_promoters.10Kb","Brd4_promoters.10Kb","Brd3_promoters.10Kb","Brd2_promoters.10Kb")
+epi_g_order <-c('Bound Proteins','Histone Post-translational Modification')
+kk <- readRDS('epiGenHeatMap_dddd/roc.res.rds')
+epiROC <- as.data.frame(kk$ROC) %>% rownames_to_column(var = "feature") %>% pivot_longer(!feature,values_to='val', names_to='sample') %>%
+  mutate(group=ifelse(feature %in% b_prot,'Bound Proteins','Histone Post-translational Modification')) %>%
+  mutate(group=factor(group,levels=epi_g_order)) %>%
+  mutate(feature=factor(feature,levels=rownames(kk$ROC))) %>% mutate(sample=factor(sample,levels=colnames(kk$ROC)))
 
 
-?chisq.test
+png(height = 10, width = 10,units = 'in', res=300, file = 'epi_roc.png')
+epiROC %>%
+  ggplot( aes(sample,feature, fill= val)) + 
+  geom_tile() +
+  scale_fill_gradientn(colours=c('blue','white','red'),na.value = "transparent",breaks=c(0,0.5,1),labels=c(0,0.5,1), limits=c(0,1)) +
+  facet_grid(rows=vars(epiROC$group),scales = "free_y", space = "free_y",switch='y') + 
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill="ROC area") 
+dev.off()
+
+###
+
+geno_kk <- readRDS('genHeatMap_dddd/roc.res.rds')
+geno_f_order <- rownames(geno_kk$ROC)[3:nrow(geno_kk$ROC)]
+
+geno_g_boundary <- geno_f_order[2:4]
+geno_g_density <- geno_f_order[5:9]
+geno_cg <- geno_f_order[10:14]
+geno_cpg <- geno_f_order[15:19]
+geno_dnase <- geno_f_order[20:23]
+geno_g_order=c('cancer\nasso-\nciated\ngenes','gene boundary','gene density','CG content','CpG islands','DNaseI sites')
+
+genoROC <- as.data.frame(geno_kk$ROC) %>% rownames_to_column(var = "feature") %>% filter(feature %in% geno_f_order ) %>%
+  pivot_longer(!feature,values_to='val', names_to='sample') %>%
+  mutate(group=ifelse(feature %in% geno_g_boundary,geno_g_order[2],
+               ifelse(feature %in% geno_g_density,geno_g_order[3],
+               ifelse(feature %in% geno_cg,geno_g_order[4],
+               ifelse(feature %in% geno_cpg,geno_g_order[5],
+               ifelse(feature %in% geno_dnase,geno_g_order[6],
+                      geno_g_order[1])))))) %>%
+  mutate(group=factor(group,levels=geno_g_order)) %>%
+  mutate(feature=factor(feature,levels=rev(geno_f_order),ordered=TRUE)) %>% mutate(sample=factor(sample,levels=colnames(geno_kk$ROC)))
+
+png(height = 10, width = 10,units = 'in', res=300, file = 'geno_roc.png')
+genoROC %>%
+  ggplot( aes(sample,feature, fill= val)) + 
+  geom_tile() +
+  scale_fill_gradientn(colours=c('blue','white','red'),na.value = "transparent",breaks=c(0,0.5,1),labels=c(0,0.5,1), limits=c(0,1)) +
+  facet_grid(rows=vars(genoROC$group),scales = "free_y", space = "free_y",switch='y') + 
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank()) +
+  labs(fill="ROC area") 
+dev.off()
 
