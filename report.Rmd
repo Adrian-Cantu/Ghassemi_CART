@@ -1,8 +1,16 @@
 ---
 title: "Ghassemi Report"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: pdf_document
+header-includes:
+   - \usepackage{graphicx}
+output: 
+  pdf_document:
+    citation_package: natbib
+    template: svm-latex-ms2.tex 
+    keep_tex: true
+bibliography: 'therapy.bib'
 ---
+
 
 # Introduction
 
@@ -16,13 +24,13 @@ one may expect a low Gini coefficient, high Shannon Index, and high UC50 (propor
 in the sample).
 
 Under most circumstances only a subset of sites will be sampled. We thus include an estimate of sample size based on frequency of
-isolation information from the SonicLength method (Berry, 2012). The 'S.chao1' column denotes the estimated lower bound for population
-size derived using Chao estimate (Chao, 1987). If sample replicates were present then estimates were subjected to jackknife bias correction.
+isolation information from the SonicLength method @berry2012. The 'S.chao1' column denotes the estimated lower bound for population
+size derived using Chao estimate @chao1987. If sample replicates were present then estimates were subjected to jackknife bias correction.
 
-We estimate the numbers of cell clones sampled using the SonicLength method (Berry, 2012); this is summarized in the column “Inferred cells”.
+We estimate the numbers of cell clones sampled using the SonicLength method @berry2012; this is summarized in the column “Inferred cells”.
 Integration sites were recovered using ligation mediated PCR after random fragmentation of genomic DNA, which reduces recovery biases compared
 with restriction enzyme cleavage. Relative abundance was not measured from read counts, which are known to be inaccurate, but from marks
-introduced into DNA specimens prior to PCR amplification using the SonicLength method PMID:22238265.
+introduced into DNA specimens prior to PCR amplification using the SonicLength method @berry2012.
 
 We quantify population diversity using Gini coefficients, Shannon index, and UC50. The Gini coefficient provides a measure of inequality
 in clonal abundance in each sample. The coefficient equals zero when all sites are equally abundant (polyclonal) and increases as fewer
@@ -33,7 +41,7 @@ of unique sites identified in the sample).
 
 Integration positions are reported with the format (nearest gene, chromosome, +/-, genomic position) where the nearest gene is the nearest
 transcriptional boundary to the integration position, '+' refers to integration in the positive orientation and '-' refers to integration in
-the reverse orientation. Reported distances are signed where where the sign indicates if integrationsare upstream (-) or downstream (+, no sign)
+the reverse orientation. Reported distances are signed where where the sign indicates if integrations are upstream (-) or downstream (+, no sign)
 of the nearest gene. Nearest genes possess additional annotations described in the table below.
 
 
@@ -57,6 +65,9 @@ library(Homo.sapiens)
 library(tidyverse)
 library(randomForest)
 library(knitr)
+library(vegan)
+library(reldist)
+
 
 all_genes <- genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
 
@@ -93,14 +104,42 @@ print(xtable(o, align='lll'), comment=FALSE, include.rownames = FALSE)
 # Samples
 
 ```{r sampleTable}
-sample_table <- read.csv('summary.csv')
+#sample_table <- read.csv('summary.csv')
 #sample_table$patient <- sub('^p', '', sample_table$patient)
 #f_table <- sample_table %>% filter(GTSP %in% s) %>% mutate(dataSource=NULL, Included= NULL) %>% arrange(patient, Timepoint) %>% mutate(patient=ifelse(patient=='Patient5','Patient4',patient))
 
 #openxlsx::write.xlsx(f_table, file = 'output/sample_table.xlsx')
 
-sample_table %>% kable( "latex", booktabs = TRUE) %>%
-  kable_styling(latex_options = c("HOLD_position", "repeat_header","scale_down"))
+#sample_table 
+calculateUC50 <- function(abund){
+  stopifnot(is.vector(abund) & is.numeric(abund))
+  abund <- abund[order(abund)]
+  accum <- sapply(1:length(abund), function(i){sum(abund[1:i])})
+  length(accum[accum >= sum(abund)/2])
+}
+
+
+
+d %>% group_by(GTSP) %>%
+  summarise(timePointDays = timePointDays[1],
+            # Replicates    = n_distinct(sampleName),
+            # Patient       = patient[1],
+            Timepoint     = timePoint[1],
+            CellType      = cellType[1],
+            TotalReads    = ppNum(sum(reads)),
+            InferredCells = ppNum(sum(estAbund)),
+            UniqueSites   = ppNum(n_distinct(posid)),
+            Gini          = sprintf("%.3f", gini(estAbund)),
+            Chao1         = ppNum(round(estimateR(estAbund, index='chao')[2], 0)),
+            Shannon       = sprintf("%.2f", diversity(estAbund)),
+            Pielou        = sprintf("%.3f", diversity(estAbund)/log(specnumber(estAbund))),
+            UC50          = ppNum(calculateUC50(estAbund))
+  ) %>%
+  ungroup() %>%
+  arrange(timePointDays) %>%
+  mutate(timePointDays = NULL) %>%
+  kable( "latex", booktabs = TRUE) %>%
+  kable_styling(latex_options = c("HOLD_position","striped","scale_down"))
 ```
 
 ```{r def_gene, include=FALSE, results='asis'}
@@ -141,7 +180,10 @@ d7vsd9 <- scanStats(g1,g2,gr1.label = "D7",gr2.label = "D9", kvals = "4L:20L") %
   rowwise() %>%
   mutate(genesIntsites=list_genes(as.character(seqnames),start,end),
          genesEntrez=list_all_genes(seqnames = seqnames,start = start,end = end,all_genes)) %>%
-  ungroup()
+  ungroup() %>%
+  rename(value1='countD9') %>% rename(value2='countD7') %>%
+  mutate(start=ppNum(start),end=ppNum(end),width=ppNum(width),strand=NULL, clump.id=NULL) %>%
+  relocate(countD9, .after = countD7)
 
 openxlsx::addWorksheet(wb, "d7vsd9")
 openxlsx::writeDataTable(wb,"d7vsd9",d7vsd9)
@@ -161,9 +203,9 @@ openxlsx::saveWorkbook(wb, file = "Scan_stats.xlsx", overwrite = TRUE)
 ```
 
 
-# Random Forest
+<!-- # Random Forest -->
 
-```{r testing}
+```{r testing, eval=FALSE, include=FALSE}
 kk <- d %>% group_by(nearestFeature,patient,GTSP) %>% summarise(val=sum(relAbund)) %>% ungroup() %>%
   group_by(nearestFeature) %>% mutate(num=n()) %>% filter(num>1) %>% mutate(sample=paste0(GTSP,'-',patient),num=NULL) %>% ungroup() %>% mutate(patient=NULL,GTSP=NULL)
 
@@ -175,19 +217,23 @@ rf2 <- randomForest(x=t(rf_mat),y=as.factor(c("d7","d7","d9","d9","d7","d9")), i
 ```
 
 
-```{r, fig.cap="Random Forest most important genes", fig.height=9, out.width="100%"}
+```{r, eval=FALSE, fig.cap="Random Forest most important genes", fig.height=9, include=FALSE, out.width="100%"}
 rf2
 varImpPlot(rf2, type = 1,main="")
 ```
 
+\newpage
 # hot ROCs
- 
-```{r, echo=FALSE, out.width="100%", out.height="80%" ,fig.cap="Epigenetic features",fig.align="center"}
-include_graphics("epiGenHeatMap_dd/main.png") 
-```
 
-```{r, echo=FALSE, out.width="100%", out.height="80%" ,fig.cap="Genomic features",fig.align="center"}
-include_graphics("genHeatMap_dd/main.png") 
+The ROC curve heatmaps were generated as described in @berry2014 (Berry et al., “Selection of Target Sites for Mobile DNA Integration in the Human Genome.”). They show how much the distribution of insertion sites across several genomic and epigenomic features differs from a random distribution. The heatmaps include D7 and D9 samples as well as some preinfusion samples from @nobles2020 (Nobles et al., “CD19-Targeting CAR T Cell Immunotherapy Outcomes Correlate with Genomic Modification by Vector Integration.”). All samples fallow roughly the same pattern for all features.
+ 
+```{r, fig.align="center", fig.cap="Metagenomic features", out.width="100%"}
+#convert -crop 2150x1000+60+0 main.svg main.png
+include_graphics("epiGenHeatMap_ddd/main.png") 
+```
+ 
+```{r, fig.align="center", fig.cap="Genomic features", out.width="100%"}
+ include_graphics("genHeatMap_ddd/main.png") 
 ```
 \newpage
 # Tracking of clonal abundances
@@ -313,3 +359,6 @@ invisible(sapply(1:pages, function(page){
 
 
 ```
+
+\newpage
+# 

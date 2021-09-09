@@ -25,9 +25,11 @@ ss<-c("GTSP0560","GTSP0561","GTSP0562","GTSP0563","GTSP0564","GTSP0565","GTSP056
 
 arr <-paste0("SELECT * FROM gtsp WHERE SpecimenAccNum IN ('",paste(ss,collapse = "','"),"')")
 nob_sample_tab <- dbGetQuery(dbConn,arr)
+openxlsx::write.xlsx(nob_sample_tab, file = 'Nobles2020_samples.xlsx')
+t0_samples <- nob_sample_tab %>% filter(Timepoint=='d0',SpecimenInfo=='Pre-Infusion_Product')
 
 if(! file.exists('intSites_nob.rds')){
-  intSites_nob <- getDBgenomicFragments(ss, 'specimen_management', 'intsites_miseq') %>%
+  intSites_nob <- getDBgenomicFragments(t0_samples$SpecimenAccNum, 'specimen_management', 'intsites_miseq') %>%
             stdIntSiteFragments() %>%
             collapseReplicatesCalcAbunds() %>%
             annotateIntSites()
@@ -51,15 +53,17 @@ dd <- rbind(d,d_nob)
 # the location of the epimakers and database settings which are now no longer needed for 
 # the genomic heatmap maker. Software paths and config file paths are function paramters.
 
-dir.create('epiGenHeatMap_dd')
+dir.create('epiGenHeatMap_ddd')
 set.seed(2356)
-createEpiGenomicHeatMapData(dd, outputDir='epiGenHeatMap_dd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',controlFile="INSPIIRED.yml",softwarePath = 'epi_heatmap_from_file.R')
+createEpiGenomicHeatMapData(dd, outputDir='epiGenHeatMap_ddd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',controlFile="INSPIIRED.yml",softwarePath = 'epi_heatmap_from_file.R')
 epiGenomicHeatMap <- createGenomicHeatMapPlot('epiGenHeatMap_dd', sampleOrder = unique(dd$patient))
 
-dir.create('genHeatMap_dd')
-createGenomicHeatMapData(dd, outputDir='genHeatMap_dd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',softwarePath = 'genomic_heatmap_from_file.R',controlFile = 'INSPIIRED.yml')
-genomicHeatMap <- createGenomicHeatMapPlot('genHeatMap_dd', sampleOrder = c('D7', 'D9'))
+dir.create('genHeatMap_ddd')
+createGenomicHeatMapData(dd, outputDir='genHeatMap_ddd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',softwarePath = 'genomic_heatmap_from_file.R',controlFile = 'INSPIIRED.yml')
+genomicHeatMap <- createGenomicHeatMapPlot('genHeatMap_ddd', sampleOrder = c('D7', 'D9'))
 
 # pdf(file='test.pdf')
 # genomicHeatMap
 # dev.off()
+
+
