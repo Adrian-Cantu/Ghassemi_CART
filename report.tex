@@ -159,6 +159,16 @@
 \noindent  \hypertarget{introduction}{%
 \section{Introduction}\label{introduction}}
 
+This report compares two lentiviral CART pre-infusion products. ``D9''
+samples are manufactured using the standard protocol. ``D7'' samples are
+manufactured using a new protocol where cells are transduced and
+expanded for a single day with no activation. This analysis aims to
+elucidate whether their insertion site profiles are significantly
+different.
+
+\hypertarget{samples}{%
+\section{Samples}\label{samples}}
+
 The samples studied in this report, the numbers of sequence reads,
 recovered integration vectors, and unique integration sites available
 for this subject are shown below. We quantify population clone diversity
@@ -190,18 +200,6 @@ measured from read counts, which are known to be inaccurate, but from
 marks introduced into DNA specimens prior to PCR amplification using the
 SonicLength method \citet{berry2012}.
 
-We quantify population diversity using Gini coefficients, Shannon index,
-and UC50. The Gini coefficient provides a measure of inequality in
-clonal abundance in each sample. The coefficient equals zero when all
-sites are equally abundant (polyclonal) and increases as fewer sites
-account for more of the total (oligoclonal). Shannon index is another
-widely used measure of diversity and it accounts for both abundance and
-evenness of the integration events. UC50 is the number of clones which
-make up the top 50\% of the sample's abundance. For polyclonal samples,
-one may expect a low Gini coefficient, high Shannon Index, and high UC50
-(proportional to the total number of unique sites identified in the
-sample).
-
 Integration positions are reported with the format (nearest gene,
 chromosome, +/-, genomic position) where the nearest gene is the nearest
 transcriptional boundary to the integration position, `+' refers to
@@ -223,9 +221,6 @@ Symbol & Meaning \\
    \hline
 \end{tabular}
 \end{table}
-
-\hypertarget{samples}{%
-\section{Samples}\label{samples}}
 
 \begin{table}[H]
 \centering
@@ -294,12 +289,10 @@ chr19 & 47,504,800 & 47,575,928 & 71,129 & 3 & 1 & 4.6910002 & D7 & ZNF541 NAPA 
 \end{tabular}}
 \end{table}
 
-\newpage
-
 \hypertarget{hot-rocs}{%
 \section{hot ROCs}\label{hot-rocs}}
 
-The ROC curve heatmaps were generated as described in \citet{berry2014}.
+The ROC curve heatmaps were generated as described in \citet{berry2006}.
 They show how much the distribution of insertion sites across several
 genomic and epigenomic features differs from a random distribution. The
 heatmaps include D7 and D9 samples as well as some preinfusion samples
@@ -323,16 +316,17 @@ all features.
 
 \caption{Genomic features}\label{fig:unnamed-chunk-3}
 \end{figure}
-\newpage
 
-\hypertarget{tracking-of-clonal-abundances}{%
-\section{Tracking of clonal
-abundances}\label{tracking-of-clonal-abundances}}
+\hypertarget{conclusion}{%
+\section{Conclusion}\label{conclusion}}
 
-\newpage
+This analisys found no diference in the insertion site profile of ``D7''
+samples produced using a new manufacturing process when compared to
+``D9'' samples or other published samples. Clonal expansion is minimal
+and of no concern for both ``D7'' and ``D9'' samples
 
 \hypertarget{code-availability}{%
-\section{code availability}\label{code-availability}}
+\section{Code availability}\label{code-availability}}
 
 all the code used to generate this report is available at
 \url{https://github.com/Adrian-Cantu/Ghassemi_CART}

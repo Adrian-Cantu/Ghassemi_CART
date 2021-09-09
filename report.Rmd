@@ -1,6 +1,5 @@
 ---
 title: "Ghassemi Report"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
 header-includes:
    - \usepackage{graphicx}
 output: 
@@ -9,10 +8,15 @@ output:
     template: svm-latex-ms2.tex 
     keep_tex: true
 bibliography: 'therapy.bib'
+date: \`r format(Sys.Date(), "%B %d, %Y")`\
 ---
 
 
 # Introduction
+
+This report compares two lentiviral CART pre-infusion products. "D9" samples are manufactured using the standard protocol. "D7" samples are manufactured using a new protocol where cells are transduced and expanded for a single day with no activation. This analysis aims to elucidate whether their insertion site profiles are significantly different.   
+
+# Samples
 
 The samples studied in this report, the numbers of sequence reads, recovered integration vectors, and unique integration
 sites available for this subject are shown below. We quantify population clone diversity using Gini coefficients, Shannon index,
@@ -31,13 +35,6 @@ We estimate the numbers of cell clones sampled using the SonicLength method @ber
 Integration sites were recovered using ligation mediated PCR after random fragmentation of genomic DNA, which reduces recovery biases compared
 with restriction enzyme cleavage. Relative abundance was not measured from read counts, which are known to be inaccurate, but from marks
 introduced into DNA specimens prior to PCR amplification using the SonicLength method @berry2012.
-
-We quantify population diversity using Gini coefficients, Shannon index, and UC50. The Gini coefficient provides a measure of inequality
-in clonal abundance in each sample. The coefficient equals zero when all sites are equally abundant (polyclonal) and increases as fewer
-sites account for more of the total (oligoclonal). Shannon index is another widely used measure of diversity and it accounts for both
-abundance and evenness of the integration events. UC50 is the number of clones which make up the top 50% of the sample's abundance.
-For polyclonal samples, one may expect a low Gini coefficient, high Shannon Index, and high UC50 (proportional to the total number
-of unique sites identified in the sample).
 
 Integration positions are reported with the format (nearest gene, chromosome, +/-, genomic position) where the nearest gene is the nearest
 transcriptional boundary to the integration position, '+' refers to integration in the positive orientation and '-' refers to integration in
@@ -100,9 +97,6 @@ print(xtable(o, align='lll'), comment=FALSE, include.rownames = FALSE)
 ```
 
 
-
-# Samples
-
 ```{r sampleTable}
 #sample_table <- read.csv('summary.csv')
 #sample_table$patient <- sub('^p', '', sample_table$patient)
@@ -162,11 +156,6 @@ list_all_genes <- function(seqnames,start,end,genes) {
 wb <- openxlsx::createWorkbook()
 #cat("\\newpage")
 ```
-
-
-
-
-
 
 
 # Relative abundance of cell clones
@@ -328,11 +317,9 @@ openxlsx::saveWorkbook(wb, file = "Scan_stats.xlsx", overwrite = TRUE)
 
 ```
 
-
-\newpage
 # hot ROCs
 
-The ROC curve heatmaps were generated as described in @berry2014. They show how much the distribution of insertion sites across several genomic and epigenomic features differs from a random distribution. The heatmaps include D7 and D9 samples as well as some preinfusion samples from @nobles2020. All samples fallow roughly the same pattern for all features.
+The ROC curve heatmaps were generated as described in @berry2006. They show how much the distribution of insertion sites across several genomic and epigenomic features differs from a random distribution. The heatmaps include D7 and D9 samples as well as some preinfusion samples from @nobles2020. All samples fallow roughly the same pattern for all features.
  
 ```{r, fig.align="center", fig.cap="Metagenomic features", out.width="100%"}
 #convert -crop 2150x1000+60+0 main.svg main.png
@@ -342,6 +329,8 @@ include_graphics("epiGenHeatMap_ddd/main.png")
 ```{r, fig.align="center", fig.cap="Genomic features", out.width="100%"}
  include_graphics("genHeatMap_ddd/main.png") 
 ```
-\newpage
-# code availability
+# Conclusion
+This analisys found no diference in the insertion site profile of "D7" samples produced using a new manufacturing process when compared to "D9" samples or other published samples. Clonal expansion is minimal and of no concern for both "D7" and "D9" samples
+
+# Code availability
 all the code used to generate this report is available at [https://github.com/Adrian-Cantu/Ghassemi_CART](https://github.com/Adrian-Cantu/Ghassemi_CART)
