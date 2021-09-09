@@ -245,13 +245,36 @@ GTSP3800 & D9.3 & T-Cells & 1,341,729 & 7,895 & 6,644 & 0.135 & 22,310 & 8.74 & 
 \end{tabular}}
 \end{table}
 
+\hypertarget{relative-abundance-of-cell-clones}{%
+\section{Relative abundance of cell
+clones}\label{relative-abundance-of-cell-clones}}
+
+The relative abundances of cell clones is summarized in the stacked bar
+plots below. The cell fraction studied is named at the top of each plot
+and the time points are marked at the bottom. The different bars in each
+panel show the major cell clones, as marked by integration sites where
+the x-axis indicates time points and the y-axis is scaled by proportion
+of the total cells sampled. The top 10 most abundant clones from each
+cell type have been named by the nearest gene while the remaining sites
+are binned as low abundance (LowAbund; grey). The total number of
+genomic fragments used to identify integration sites are listed atop of
+each plot.
+
+\begin{center}\includegraphics{report_files/figure-latex/abundant-1} \end{center}
+
+\newpage
+
 \hypertarget{scan-stats}{%
 \section{Scan stats}\label{scan-stats}}
 
-Genes associated with the Scan intervals were retrieved using two
-methods. genesIntsites uses the closest gene to each insertion site.
-genesEntrez retrieve all genes from the Entrez database that intersects
-that interval. Those tables are also available in ``Scan\_stats.xlsx''.
+We performed a Scan Statistics analysis as described in
+\citet{berry2014}. This method looks for clusters of insertion sites
+that differentiate two samples in a way that prevents doing multiple
+comparisons and reducing the significance of the test. Genes associated
+with the Scan intervals were retrieved using two methods. genesIntsites
+uses the closest gene to each insertion site. genesEntrez retrieve all
+genes from the Entrez database that intersects that interval. Those
+tables are also available in ``Scan\_stats.xlsx''.
 
 \begin{table}[H]
 
@@ -276,15 +299,12 @@ chr19 & 47,504,800 & 47,575,928 & 71,129 & 3 & 1 & 4.6910002 & D7 & ZNF541 NAPA 
 \hypertarget{hot-rocs}{%
 \section{hot ROCs}\label{hot-rocs}}
 
-The ROC curve heatmaps were generated as described in \citet{berry2014}
-(Berry et al., ``Selection of Target Sites for Mobile DNA Integration in
-the Human Genome.''). They show how much the distribution of insertion
-sites across several genomic and epigenomic features differs from a
-random distribution. The heatmaps include D7 and D9 samples as well as
-some preinfusion samples from \citet{nobles2020} (Nobles et al.,
-``CD19-Targeting CAR T Cell Immunotherapy Outcomes Correlate with
-Genomic Modification by Vector Integration.''). All samples fallow
-roughly the same pattern for all features.
+The ROC curve heatmaps were generated as described in \citet{berry2014}.
+They show how much the distribution of insertion sites across several
+genomic and epigenomic features differs from a random distribution. The
+heatmaps include D7 and D9 samples as well as some preinfusion samples
+from \citet{nobles2020}. All samples fallow roughly the same pattern for
+all features.
 
 \begin{figure}[H]
 
@@ -292,7 +312,7 @@ roughly the same pattern for all features.
 
 }
 
-\caption{Metagenomic features}\label{fig:unnamed-chunk-3}
+\caption{Metagenomic features}\label{fig:unnamed-chunk-2}
 \end{figure}
 
 \begin{figure}[H]
@@ -301,7 +321,7 @@ roughly the same pattern for all features.
 
 }
 
-\caption{Genomic features}\label{fig:unnamed-chunk-4}
+\caption{Genomic features}\label{fig:unnamed-chunk-3}
 \end{figure}
 \newpage
 
@@ -309,24 +329,13 @@ roughly the same pattern for all features.
 \section{Tracking of clonal
 abundances}\label{tracking-of-clonal-abundances}}
 
-\hypertarget{relative-abundance-of-cell-clones}{%
-\subsection{Relative abundance of cell
-clones}\label{relative-abundance-of-cell-clones}}
-
-The relative abundances of cell clones is summarized in the stacked bar
-plots below. The cell fraction studied is named at the top of each plot
-and the time points are marked at the bottom. The different bars in each
-panel show the major cell clones, as marked by integration sites where
-the x-axis indicates time points and the y-axis is scaled by proportion
-of the total cells sampled. The top 10 most abundant clones from each
-cell type have been named by the nearest gene while the remaining sites
-are binned as low abundance (LowAbund; grey). The total number of
-genomic fragments used to identify integration sites are listed atop of
-each plot.
-
-\begin{center}\includegraphics{report_files/figure-latex/abundant-1} \end{center}
-
 \newpage
+
+\hypertarget{code-availability}{%
+\section{code availability}\label{code-availability}}
+
+all the code used to generate this report is available at
+\url{https://github.com/Adrian-Cantu/Ghassemi_CART}
 
 
 

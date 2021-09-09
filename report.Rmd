@@ -165,80 +165,11 @@ wb <- openxlsx::createWorkbook()
 
 
 
-```{r scan_stat}
-g1 <- d %>% filter(patient == 'D7' )  %>% makeGRangesFromDataFrame(.,keep.extra.columns=TRUE)
-g2 <- d %>% filter(patient == 'D9' )  %>% makeGRangesFromDataFrame(.,keep.extra.columns=TRUE)
-
-D7_num <- g1 %>% GenomicRanges::as.data.frame() %>%nrow()
-D9_num <- g2 %>% GenomicRanges::as.data.frame() %>%nrow()
 
 
-d7vsd9 <- scanStats(g1,g2,gr1.label = "D7",gr2.label = "D9", kvals = "4L:20L") %>%
-  GenomicRanges::as.data.frame(.) %>%
-  arrange(clusterSource) %>%
-#  filter(width < 1000000)  %>%
-  rowwise() %>%
-  mutate(genesIntsites=list_genes(as.character(seqnames),start,end),
-         genesEntrez=list_all_genes(seqnames = seqnames,start = start,end = end,all_genes)) %>%
-  ungroup() %>%
-  rename(value1='countD9') %>% rename(value2='countD7') %>%
-  mutate(start=ppNum(start),end=ppNum(end),width=ppNum(width),strand=NULL, clump.id=NULL) %>%
-  relocate(countD9, .after = countD7)
-
-openxlsx::addWorksheet(wb, "d7vsd9")
-openxlsx::writeDataTable(wb,"d7vsd9",d7vsd9)
-```
-
-# Scan stats
-
-Genes associated with the Scan intervals were retrieved using two methods. genesIntsites uses the closest gene to each insertion site. genesEntrez retrieve all genes from the Entrez database that intersects that interval. Those tables are also available in "Scan_stats.xlsx".
-
-```{r scan_table}
-d7vsd9 %>%
-     kable( "latex", booktabs = TRUE, caption ="scan statistics") %>%
-   kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
-
-openxlsx::saveWorkbook(wb, file = "Scan_stats.xlsx", overwrite = TRUE)
-
-```
 
 
-<!-- # Random Forest -->
-
-```{r testing, eval=FALSE, include=FALSE}
-kk <- d %>% group_by(nearestFeature,patient,GTSP) %>% summarise(val=sum(relAbund)) %>% ungroup() %>%
-  group_by(nearestFeature) %>% mutate(num=n()) %>% filter(num>1) %>% mutate(sample=paste0(GTSP,'-',patient),num=NULL) %>% ungroup() %>% mutate(patient=NULL,GTSP=NULL)
-
-rf_mat <- kk %>% pivot_wider(names_from=sample,values_from=val,values_fill=0) %>% column_to_rownames(var = 'nearestFeature')
-
-rf2 <- randomForest(x=t(rf_mat),y=as.factor(c("d7","d7","d9","d9","d7","d9")), importance=TRUE, ntree=3000,classwt= c(1,1))
-
-
-```
-
-
-```{r, eval=FALSE, fig.cap="Random Forest most important genes", fig.height=9, include=FALSE, out.width="100%"}
-rf2
-varImpPlot(rf2, type = 1,main="")
-```
-
-\newpage
-# hot ROCs
-
-The ROC curve heatmaps were generated as described in @berry2014 (Berry et al., “Selection of Target Sites for Mobile DNA Integration in the Human Genome.”). They show how much the distribution of insertion sites across several genomic and epigenomic features differs from a random distribution. The heatmaps include D7 and D9 samples as well as some preinfusion samples from @nobles2020 (Nobles et al., “CD19-Targeting CAR T Cell Immunotherapy Outcomes Correlate with Genomic Modification by Vector Integration.”). All samples fallow roughly the same pattern for all features.
- 
-```{r, fig.align="center", fig.cap="Metagenomic features", out.width="100%"}
-#convert -crop 2150x1000+60+0 main.svg main.png
-include_graphics("epiGenHeatMap_ddd/main.png") 
-```
- 
-```{r, fig.align="center", fig.cap="Genomic features", out.width="100%"}
- include_graphics("genHeatMap_ddd/main.png") 
-```
-\newpage
-# Tracking of clonal abundances
-
-## Relative abundance of cell clones
+# Relative abundance of cell clones
 
 The relative abundances of cell clones is summarized in the stacked bar plots below. The cell fraction studied
 is named at the top of each plot and the time points are marked at the bottom. The different bars in each panel
@@ -250,12 +181,12 @@ The total number of genomic fragments used to identify integration sites are lis
 
 ```{r abundant,fig.width=10, fig.height=5, results='asis',fig.align="center"}
 # prepare dataframe
-d <- intSites %>% GenomicRanges::as.data.frame()
+dd <- intSites %>% GenomicRanges::as.data.frame()
 
 # Convert cell types to uppercase and remove leading and trailing white spaces.
-d$cellType <- gsub('^\\s+|\\s+$', '', toupper(d$cellType))
+dd$cellType <- gsub('^\\s+|\\s+$', '', toupper(d$cellType))
 
-d <- dplyr::group_by(d, timePoint, cellType) %>%
+dd <- dplyr::group_by(d, timePoint, cellType) %>%
      dplyr::mutate(readsPerSample = sum(reads)) %>%
      dplyr::ungroup() %>%
      dplyr::group_by(timePoint, cellType, posid) %>%
@@ -269,23 +200,23 @@ d <- dplyr::group_by(d, timePoint, cellType) %>%
      dplyr::ungroup()
 
 # Add nearest feature flags.
-d <- d %>%
+dd <- dd %>%
   mutate(labeledNearestFeature = paste0(nearestFeature, ' ')) %>%
   mutate(labeledNearestFeature = ifelse(inFeature, paste0(labeledNearestFeature, '*'), labeledNearestFeature))
 
 if('nearestOncoFeatureDist' %in% names(d))
-  d <- mutate(d, labeledNearestFeature = ifelse(abs(nearestOncoFeatureDist) <= 50000, paste0(labeledNearestFeature, '~'), labeledNearestFeature))
+  dd <- mutate(dd, labeledNearestFeature = ifelse(abs(nearestOncoFeatureDist) <= 50000, paste0(labeledNearestFeature, '~'), labeledNearestFeature))
 
 if('nearestlymphomaFeatureDist' %in% names(d))
-  d <- mutate(d, labeledNearestFeature = ifelse(abs(nearestlymphomaFeatureDist) <= 50000, paste0(labeledNearestFeature, '!'), labeledNearestFeature))
+  dd <- mutate(dd, labeledNearestFeature = ifelse(abs(nearestlymphomaFeatureDist) <= 50000, paste0(labeledNearestFeature, '!'), labeledNearestFeature))
 
 
 # Create label for unique intSites.
-d$posidLabel <- paste0(d$labeledNearestFeature, '\n', d$posid)
+dd$posidLabel <- paste0(d$labeledNearestFeature, '\n', d$posid)
 numClones <- 10
-d$dataSource <- 'Illumina'
+dd$dataSource <- 'Illumina'
 # Create data frame needed to generate relative abundance plots.
-abundantClones <- bind_rows(lapply(split(d, d$cellType), function(x){
+abundantClones <- bind_rows(lapply(split(dd, dd$cellType), function(x){
 #browser()
  #  Adjust the number of clones to return based on the number of sites per cell type.#
   if(nrow(x) < numClones) numClones <- nrow(x)
@@ -360,5 +291,57 @@ invisible(sapply(1:pages, function(page){
 
 ```
 
+# Scan stats
+
+```{r scan_stat}
+g1 <- d %>% filter(patient == 'D7' )  %>% makeGRangesFromDataFrame(.,keep.extra.columns=TRUE)
+g2 <- d %>% filter(patient == 'D9' )  %>% makeGRangesFromDataFrame(.,keep.extra.columns=TRUE)
+
+D7_num <- g1 %>% GenomicRanges::as.data.frame() %>%nrow()
+D9_num <- g2 %>% GenomicRanges::as.data.frame() %>%nrow()
+
+
+d7vsd9 <- scanStats(g1,g2,gr1.label = "D7",gr2.label = "D9", kvals = "4L:20L") %>%
+  GenomicRanges::as.data.frame(.) %>%
+  arrange(clusterSource) %>%
+#  filter(width < 1000000)  %>%
+  rowwise() %>%
+  mutate(genesIntsites=list_genes(as.character(seqnames),start,end),
+         genesEntrez=list_all_genes(seqnames = seqnames,start = start,end = end,all_genes)) %>%
+  ungroup() %>%
+  rename(value1='countD9') %>% rename(value2='countD7') %>%
+  mutate(start=ppNum(start),end=ppNum(end),width=ppNum(width),strand=NULL, clump.id=NULL) %>%
+  relocate(countD9, .after = countD7)
+
+openxlsx::addWorksheet(wb, "d7vsd9")
+openxlsx::writeDataTable(wb,"d7vsd9",d7vsd9)
+```
+
+We performed a Scan Statistics analysis as described in @berry2014. This method looks for clusters of insertion sites that differentiate two samples in a way that prevents doing multiple comparisons and reducing the significance of the test. Genes associated with the Scan intervals were retrieved using two methods. genesIntsites uses the closest gene to each insertion site. genesEntrez retrieve all genes from the Entrez database that intersects that interval. Those tables are also available in "Scan_stats.xlsx".
+
+```{r scan_table}
+d7vsd9 %>%
+     kable( "latex", booktabs = TRUE, caption ="scan statistics") %>%
+   kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+
+openxlsx::saveWorkbook(wb, file = "Scan_stats.xlsx", overwrite = TRUE)
+
+```
+
+
 \newpage
-# 
+# hot ROCs
+
+The ROC curve heatmaps were generated as described in @berry2014. They show how much the distribution of insertion sites across several genomic and epigenomic features differs from a random distribution. The heatmaps include D7 and D9 samples as well as some preinfusion samples from @nobles2020. All samples fallow roughly the same pattern for all features.
+ 
+```{r, fig.align="center", fig.cap="Metagenomic features", out.width="100%"}
+#convert -crop 2150x1000+60+0 main.svg main.png
+include_graphics("epiGenHeatMap_ddd/main.png") 
+```
+ 
+```{r, fig.align="center", fig.cap="Genomic features", out.width="100%"}
+ include_graphics("genHeatMap_ddd/main.png") 
+```
+\newpage
+# code availability
+all the code used to generate this report is available at [https://github.com/Adrian-Cantu/Ghassemi_CART](https://github.com/Adrian-Cantu/Ghassemi_CART)
