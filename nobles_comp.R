@@ -66,4 +66,32 @@ genomicHeatMap <- createGenomicHeatMapPlot('genHeatMap_ddd', sampleOrder = c('D7
 # genomicHeatMap
 # dev.off()
 
+onco_yes_nob <- sum(d_nob$nearestOncoFeatureDist < 50000)
+onco_no_nob <- sum(d_nob$nearestOncoFeatureDist >= 50000)
+onco_yes_nob + onco_no_nob
 
+onco_yes_D7 <- d %>% filter(patient=='D7' & nearestOncoFeatureDist <  50000) %>% nrow()
+onco_no_D7  <- d %>% filter(patient=='D7' & nearestOncoFeatureDist >= 50000) %>% nrow()
+
+onco_yes_D9 <- d %>% filter(patient=='D9' & nearestOncoFeatureDist <  50000) %>% nrow()
+onco_no_D9  <- d %>% filter(patient=='D9' & nearestOncoFeatureDist >= 50000) %>% nrow()
+
+
+dat <- data.frame(
+  "nob" = c(onco_yes_nob, onco_no_nob),
+  "D7" = c(onco_yes_D7,onco_no_D7),
+  'D9' = c(onco_yes_D9,onco_no_D9),
+  row.names = c("onco_yes", "onco_no"),
+  stringsAsFactors = FALSE
+)
+
+as.data.frame(t(dat)) %>% mutate(prop_onco=onco_yes/(onco_yes+onco_no))
+fisher.test(dat %>% select(nob,D7))$p.value
+
+f_dat <- data.frame(
+  "nob" = c(1, fisher.test(dat %>% select(nob,D7))$p.value,fisher.test(dat %>% select(nob,D9))$p.value),
+  "D7" = c(fisher.test(dat %>% select(nob,D7))$p.value,1,fisher.test(dat %>% select(D9,D7))$p.value),
+  'D9' = c(fisher.test(dat %>% select(nob,D9))$p.value,fisher.test(dat %>% select(D7,D9))$p.value,1),
+  row.names = c("nob", "D7",'D9'),
+  stringsAsFactors = FALSE
+)
