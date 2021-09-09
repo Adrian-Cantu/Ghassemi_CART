@@ -1,14 +1,14 @@
 ---
-title: "Ghassemi Report"
+title: "Supplementary report: analysis of integration site distribution"
 header-includes:
    - \usepackage{graphicx}
 output: 
-  pdf_document:
+  bookdown::pdf_document2: 
     citation_package: natbib
     template: svm-latex-ms2.tex 
     keep_tex: true
+    toc: false
 bibliography: 'therapy.bib'
-date: \`r format(Sys.Date(), "%B %d, %Y")`\
 ---
 
 
@@ -19,10 +19,11 @@ This report compares two lentiviral CART pre-infusion products. "D9" samples are
 # Samples
 
 The samples studied in this report, the numbers of sequence reads, recovered integration vectors, and unique integration
-sites available for this subject are shown below. We quantify population clone diversity using Gini coefficients, Shannon index,
+sites available for this subject are shown in the table below. We quantify population clone diversity using Gini coefficients, Shannon index,
 and UC50. The Gini coefficient provides a measure of inequality in clonal abundance in each sample. The coefficient equals zero
 when all sites are equally abundant (polyclonal) and increases as fewer sites account for more of the total (oligoclonal).
 Shannon index is another widely used measure of diversity and it accounts for both abundance and evenness of the integration events.
+Pielou is an abundance-corrected diversity index.
 Alternatively, the UC50 is the number of unique clones which make up the top 50% of the sample's abundance. For polyclonal samples,
 one may expect a low Gini coefficient, high Shannon Index, and high UC50 (proportional to the total number of unique sites identified
 in the sample).
@@ -36,7 +37,7 @@ Integration sites were recovered using ligation mediated PCR after random fragme
 with restriction enzyme cleavage. Relative abundance was not measured from read counts, which are known to be inaccurate, but from marks
 introduced into DNA specimens prior to PCR amplification using the SonicLength method @berry2012.
 
-Integration positions are reported with the format (nearest gene, chromosome, +/-, genomic position) where the nearest gene is the nearest
+Integration positions are reported in the fallowing format "nearest gene, chromosome, +/-, genomic position" where the nearest gene is the nearest
 transcriptional boundary to the integration position, '+' refers to integration in the positive orientation and '-' refers to integration in
 the reverse orientation. Reported distances are signed where where the sign indicates if integrations are upstream (-) or downstream (+, no sign)
 of the nearest gene. Nearest genes possess additional annotations described in the table below.
@@ -92,7 +93,7 @@ library(xtable)
 o <- data.frame(Symbol = c('*', '~', '!'),
                 Meaning=c('site is within a transcription unit',
                           'site is within 50kb of a cancer related gene',
-                          'nearest gene was assocaited with lymphoma in humans'))
+                          'nearest gene was associted with lymphoma in humans'))
 print(xtable(o, align='lll'), comment=FALSE, include.rownames = FALSE)
 ```
 
@@ -136,7 +137,7 @@ d %>% group_by(GTSP) %>%
   kable_styling(latex_options = c("HOLD_position","striped","scale_down"))
 ```
 
-```{r def_gene, include=FALSE, results='asis'}
+```{r defGene, include=FALSE, results='asis'}
 list_genes <- function(chr,g_start,g_end) {
   temp <- intSites %>% GenomicRanges::as.data.frame(.) %>% filter(seqnames==chr & start>=g_start & start<=g_end)
   return(paste(unique(temp$nearestFeature),collapse = ' '))
@@ -165,17 +166,17 @@ is named at the top of each plot and the time points are marked at the bottom. T
 show the major cell clones, as marked by integration sites where the x-axis indicates time points and the y-axis
 is scaled by proportion of the total cells sampled. The top 10 most abundant clones from each cell type have
 been named by the nearest gene while the remaining sites are binned as low abundance (LowAbund; grey).
-The total number of genomic fragments used to identify integration sites are listed atop of each plot.
+The total number of genomic fragments used to identify integration sites in each sample are listed atop of each plot.
 
 
-```{r abundant,fig.width=10, fig.height=5, results='asis',fig.align="center"}
+```{r abundant,fig.width=10, fig.height=5, results='asis',fig.align="center",fig.cap="Distribution of abundant clones"}
 # prepare dataframe
 dd <- intSites %>% GenomicRanges::as.data.frame()
 
 # Convert cell types to uppercase and remove leading and trailing white spaces.
-dd$cellType <- gsub('^\\s+|\\s+$', '', toupper(d$cellType))
+dd$cellType <- gsub('^\\s+|\\s+$', '', toupper(dd$cellType))
 
-dd <- dplyr::group_by(d, timePoint, cellType) %>%
+dd <- dplyr::group_by(dd, timePoint, cellType) %>%
      dplyr::mutate(readsPerSample = sum(reads)) %>%
      dplyr::ungroup() %>%
      dplyr::group_by(timePoint, cellType, posid) %>%
@@ -193,15 +194,15 @@ dd <- dd %>%
   mutate(labeledNearestFeature = paste0(nearestFeature, ' ')) %>%
   mutate(labeledNearestFeature = ifelse(inFeature, paste0(labeledNearestFeature, '*'), labeledNearestFeature))
 
-if('nearestOncoFeatureDist' %in% names(d))
+if('nearestOncoFeatureDist' %in% names(dd))
   dd <- mutate(dd, labeledNearestFeature = ifelse(abs(nearestOncoFeatureDist) <= 50000, paste0(labeledNearestFeature, '~'), labeledNearestFeature))
 
-if('nearestlymphomaFeatureDist' %in% names(d))
+if('nearestlymphomaFeatureDist' %in% names(dd))
   dd <- mutate(dd, labeledNearestFeature = ifelse(abs(nearestlymphomaFeatureDist) <= 50000, paste0(labeledNearestFeature, '!'), labeledNearestFeature))
 
 
 # Create label for unique intSites.
-dd$posidLabel <- paste0(d$labeledNearestFeature, '\n', d$posid)
+dd$posidLabel <- paste0(dd$labeledNearestFeature, '\n', dd$posid)
 numClones <- 10
 dd$dataSource <- 'Illumina'
 # Create data frame needed to generate relative abundance plots.
@@ -282,7 +283,7 @@ invisible(sapply(1:pages, function(page){
 
 # Scan stats
 
-```{r scan_stat}
+```{r scanStat}
 g1 <- d %>% filter(patient == 'D7' )  %>% makeGRangesFromDataFrame(.,keep.extra.columns=TRUE)
 g2 <- d %>% filter(patient == 'D9' )  %>% makeGRangesFromDataFrame(.,keep.extra.columns=TRUE)
 
@@ -306,27 +307,27 @@ openxlsx::addWorksheet(wb, "d7vsd9")
 openxlsx::writeDataTable(wb,"d7vsd9",d7vsd9)
 ```
 
-We performed a Scan Statistics analysis as described in @berry2014. This method looks for clusters of insertion sites that differentiate two samples in a way that prevents doing multiple comparisons and reducing the significance of the test. Genes associated with the Scan intervals were retrieved using two methods. genesIntsites uses the closest gene to each insertion site. genesEntrez retrieve all genes from the Entrez database that intersects that interval. Those tables are also available in "Scan_stats.xlsx".
+We performed a Scan Statistics analysis as described in @berry2014. This method looks for clusters of insertion sites that differentiate two samples. Genes associated with the Scan intervals were retrieved using two methods. genesIntsites uses the closest gene to each insertion site. genesEntrez retrieve all genes from the Entrez database that intersects that interval.
 
-```{r scan_table}
+```{r scanTable}
 d7vsd9 %>%
-     kable( "latex", booktabs = TRUE, caption ="scan statistics") %>%
+     kable( "latex", booktabs = TRUE, caption ="No prominent clusters were observed") %>%
    kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
 
 openxlsx::saveWorkbook(wb, file = "Scan_stats.xlsx", overwrite = TRUE)
 
 ```
 
-# hot ROCs
+# comparison of integration site distributions to genomic annotation
 
-The ROC curve heatmaps were generated as described in @berry2006. They show how much the distribution of insertion sites across several genomic and epigenomic features differs from a random distribution. The heatmaps include D7 and D9 samples as well as some preinfusion samples from @nobles2020. All samples fallow roughly the same pattern for all features.
+ROC curve heatmaps were used to compare integration site distribution to genomic annotation as described in @berry2006. They show how much the distribution of insertion sites across several genomic and epigenomic features differs from a random distribution. The integration site distribution were compared to bound chromosomal proteins and histone post-translational modification (Figure \@ref(fig:epiROC)) or a collection of genomic features (Figure \@ref(fig:metaROC)). The heatmaps include D7 and D9 samples as well as some preinfusion samples from @nobles2020. No major differences were detected.
  
-```{r, fig.align="center", fig.cap="Metagenomic features", out.width="100%"}
+```{r metaROC, fig.align="center", fig.cap="Metagenomic features", out.width="100%"}
 #convert -crop 2150x1000+60+0 main.svg main.png
 include_graphics("epiGenHeatMap_ddd/main.png") 
 ```
  
-```{r, fig.align="center", fig.cap="Genomic features", out.width="100%"}
+```{r epiROC, fig.align="center", fig.cap="Genomic features", out.width="100%"}
  include_graphics("genHeatMap_ddd/main.png") 
 ```
 # Conclusion

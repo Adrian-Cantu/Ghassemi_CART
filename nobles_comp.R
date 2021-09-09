@@ -26,7 +26,7 @@ ss<-c("GTSP0560","GTSP0561","GTSP0562","GTSP0563","GTSP0564","GTSP0565","GTSP056
 arr <-paste0("SELECT * FROM gtsp WHERE SpecimenAccNum IN ('",paste(ss,collapse = "','"),"')")
 nob_sample_tab <- dbGetQuery(dbConn,arr)
 openxlsx::write.xlsx(nob_sample_tab, file = 'Nobles2020_samples.xlsx')
-t0_samples <- nob_sample_tab %>% filter(Timepoint=='d0',SpecimenInfo=='Pre-Infusion_Product')
+t0_samples <- nob_sample_tab %>% filter(Timepoint=='d0',SpecimenInfo=='Pre-Infusion_Product',VCN>0.17)
 
 if(! file.exists('intSites_nob.rds')){
   intSites_nob <- getDBgenomicFragments(t0_samples$SpecimenAccNum, 'specimen_management', 'intsites_miseq') %>%
@@ -53,28 +53,30 @@ dd <- rbind(d,d_nob)
 # the location of the epimakers and database settings which are now no longer needed for 
 # the genomic heatmap maker. Software paths and config file paths are function paramters.
 
-dir.create('epiGenHeatMap_ddd')
+dir.create('epiGenHeatMap_dddd')
 set.seed(2356)
-createEpiGenomicHeatMapData(dd, outputDir='epiGenHeatMap_ddd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',controlFile="INSPIIRED.yml",softwarePath = 'epi_heatmap_from_file.R')
-epiGenomicHeatMap <- createGenomicHeatMapPlot('epiGenHeatMap_dd', sampleOrder = unique(dd$patient))
+createEpiGenomicHeatMapData(dd, outputDir='epiGenHeatMap_dddd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',controlFile="INSPIIRED.yml",softwarePath = 'epi_heatmap_from_file.R')
+epiGenomicHeatMap <- createGenomicHeatMapPlot('epiGenHeatMap_dddd', sampleOrder = unique(dd$patient))
 
-dir.create('genHeatMap_ddd')
-createGenomicHeatMapData(dd, outputDir='genHeatMap_ddd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',softwarePath = 'genomic_heatmap_from_file.R',controlFile = 'INSPIIRED.yml')
-genomicHeatMap <- createGenomicHeatMapPlot('genHeatMap_ddd', sampleOrder = c('D7', 'D9'))
+dir.create('genHeatMap_dddd')
+createGenomicHeatMapData(dd, outputDir='genHeatMap_dddd',Rscript_path = '/home/adrian/anaconda3/envs/r4/bin/Rscript',softwarePath = 'genomic_heatmap_from_file.R',controlFile = 'INSPIIRED.yml')
+genomicHeatMap <- createGenomicHeatMapPlot('genHeatMap_dddd', sampleOrder = unique(dd$patient))
 
 # pdf(file='test.pdf')
 # genomicHeatMap
 # dev.off()
 
-onco_yes_nob <- sum(d_nob$nearestOncoFeatureDist < 50000)
-onco_no_nob <- sum(d_nob$nearestOncoFeatureDist >= 50000)
+gene_dist <- 10000
+
+onco_yes_nob <- (d_nob %>% filter(nearestOncoFeatureDist <  gene_dist) %>% summarise(t=sum(estAbund)))$t
+onco_no_nob <- (d_nob %>% filter(nearestOncoFeatureDist >=  gene_dist) %>% summarise(t=sum(estAbund)))$t
 onco_yes_nob + onco_no_nob
 
-onco_yes_D7 <- d %>% filter(patient=='D7' & nearestOncoFeatureDist <  50000) %>% nrow()
-onco_no_D7  <- d %>% filter(patient=='D7' & nearestOncoFeatureDist >= 50000) %>% nrow()
+onco_yes_D7 <- (d %>% filter(patient=='D7' & nearestOncoFeatureDist <  gene_dist) %>% summarise(t=sum(estAbund)))$t
+onco_no_D7  <- (d %>% filter(patient=='D7' & nearestOncoFeatureDist >= gene_dist) %>% summarise(t=sum(estAbund)))$t
 
-onco_yes_D9 <- d %>% filter(patient=='D9' & nearestOncoFeatureDist <  50000) %>% nrow()
-onco_no_D9  <- d %>% filter(patient=='D9' & nearestOncoFeatureDist >= 50000) %>% nrow()
+onco_yes_D9 <- (d %>% filter(patient=='D9' & nearestOncoFeatureDist <  gene_dist) %>% summarise(t=sum(estAbund)))$t
+onco_no_D9  <- (d %>% filter(patient=='D9' & nearestOncoFeatureDist >= gene_dist) %>% summarise(t=sum(estAbund)))$t
 
 
 dat <- data.frame(
@@ -86,12 +88,20 @@ dat <- data.frame(
 )
 
 as.data.frame(t(dat)) %>% mutate(prop_onco=onco_yes/(onco_yes+onco_no))
+chisq.test(dat) 
+
 fisher.test(dat %>% select(nob,D7))$p.value
 
 f_dat <- data.frame(
-  "nob" = c(1, fisher.test(dat %>% select(nob,D7))$p.value,fisher.test(dat %>% select(nob,D9))$p.value),
-  "D7" = c(fisher.test(dat %>% select(nob,D7))$p.value,1,fisher.test(dat %>% select(D9,D7))$p.value),
-  'D9' = c(fisher.test(dat %>% select(nob,D9))$p.value,fisher.test(dat %>% select(D7,D9))$p.value,1),
+  "nob" = c(0, fisher.test(dat %>% select(nob,D7))$p.value,fisher.test(dat %>% select(nob,D9))$p.value),
+  "D7" = c(fisher.test(dat %>% select(nob,D7))$p.value,0,fisher.test(dat %>% select(D9,D7))$p.value),
+  'D9' = c(fisher.test(dat %>% select(nob,D9))$p.value,fisher.test(dat %>% select(D7,D9))$p.value,0),
   row.names = c("nob", "D7",'D9'),
   stringsAsFactors = FALSE
 )
+f_dat
+
+
+
+?chisq.test
+
