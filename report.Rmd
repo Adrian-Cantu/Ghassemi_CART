@@ -4,6 +4,7 @@ header-includes:
    - \usepackage{graphicx}
 output: 
   bookdown::pdf_document2: 
+  #bookdown::word_document2:
     citation_package: natbib
     template: svm-latex-ms2.tex 
     keep_tex: true
@@ -65,7 +66,9 @@ library(randomForest)
 library(knitr)
 library(vegan)
 library(reldist)
-
+library(magrittr)
+library(flextable)
+doc_format <-  opts_knit$get("rmarkdown.pandoc.to")
 
 all_genes <- genes(TxDb.Hsapiens.UCSC.hg38.knownGene)
 
@@ -85,7 +88,11 @@ if(! file.exists('intSites.rds')){
 d <- data.frame(intSites)
 d$patient <- ifelse(grepl('D7', d$timePoint), 'D7', 'D9')
 
+
+
 ```
+
+
 
 
 ```{r, echo=FALSE, results='asis'}
@@ -94,8 +101,16 @@ o <- data.frame(Symbol = c('*', '~', '!'),
                 Meaning=c('site is within a transcription unit',
                           'site is within 50kb of a cancer related gene',
                           'nearest gene was associted with lymphoma in humans'))
+if(doc_format == 'docx') {
+  regulartable(o) %>% 
+  autofit() %>%
+  fit_to_width(5)
+} else if (doc_format == 'latex') {
 print(xtable(o, align='lll'), comment=FALSE, include.rownames = FALSE)
+}
 ```
+
+
 
 
 ```{r sampleTable}
@@ -115,7 +130,7 @@ calculateUC50 <- function(abund){
 
 
 
-d %>% group_by(GTSP) %>%
+ttt <-d %>% group_by(GTSP) %>%
   summarise(timePointDays = timePointDays[1],
             # Replicates    = n_distinct(sampleName),
             # Patient       = patient[1],
@@ -132,9 +147,19 @@ d %>% group_by(GTSP) %>%
   ) %>%
   ungroup() %>%
   arrange(timePointDays) %>%
-  mutate(timePointDays = NULL) %>%
+  mutate(timePointDays = NULL)
+
+
+if(doc_format == 'docx') {
+  regulartable(ttt) %>% 
+  autofit() %>%
+  fit_to_width(7.5)
+} else if (doc_format == 'latex') {
+  ttt %>%
   kable( "latex", booktabs = TRUE) %>%
   kable_styling(latex_options = c("HOLD_position","striped","scale_down"))
+}
+
 ```
 
 ```{r defGene, include=FALSE, results='asis'}
@@ -310,13 +335,21 @@ openxlsx::writeDataTable(wb,"d7vsd9",d7vsd9)
 We performed a Scan Statistics analysis as described in @berry2014. This method looks for clusters of insertion sites that differentiate two samples. Genes associated with the Scan intervals were retrieved using two methods. genesIntsites uses the closest gene to each insertion site. genesEntrez retrieve all genes from the Entrez database that intersects that interval.
 
 ```{r scanTable}
-d7vsd9 %>%
-     kable( "latex", booktabs = TRUE, caption ="No prominent clusters were observed") %>%
-   kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
-
+if(doc_format == 'docx') {
+  regulartable(d7vsd9) %>% 
+  autofit() %>%
+  fit_to_width(7.5)
+} else if (doc_format == 'latex') {
+  d7vsd9 %>%
+  kable( "latex", booktabs = TRUE, caption ="No prominent clusters were observed") %>%
+  kable_styling(latex_options = c("striped","HOLD_position","scale_down"))
+}  
+  
 openxlsx::saveWorkbook(wb, file = "Scan_stats.xlsx", overwrite = TRUE)
 
 ```
+
+
 
 # comparison of integration site distributions to genomic annotation
 
@@ -384,6 +417,8 @@ epiROC %>%
 
 
 ```
+
+
 # Conclusion
 This analysis found no difference in the insertion site profile of "D7" samples produced using a new manufacturing process when compared to "D9" samples or other published samples. Clonal expansion is minimal and of no concern for both "D7" and "D9" samples
 
